@@ -1,4 +1,5 @@
 """Provider Layer entry point — exposes the get_provider() factory."""
+from app.services.providers.anthropic_provider import AnthropicProvider
 from app.services.providers.base import (
     ChatMessage,
     LLMProvider,
@@ -9,6 +10,7 @@ from app.services.providers.openai_provider import OpenAIProvider
 
 _REGISTRY: dict[str, type[LLMProvider]] = {
     "openai": OpenAIProvider,
+    "anthropic": AnthropicProvider,
 }
 
 
