@@ -1,9 +1,9 @@
 """
-Scenario CRUD Service — orchestrates test-case (scenario) persistence and
-validates multi-turn step ordering. Owned by Ketevan (feature/scenario-builder).
+Test Case Service — orchestrates test-case persistence and validates
+multi-turn step ordering. Owned by Ketevan (feature/scenario-builder).
 
-A "scenario" in the plan maps to the existing TestCase model: it groups
-one or more ConversationSteps that exercise a Prompt against an LLM.
+A TestCase groups one or more ConversationSteps that exercise a Prompt
+against an LLM (the plan refers to these as "scenarios").
 """
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
@@ -12,21 +12,21 @@ from app.models.test_case import TestCase, TestCaseType, ConversationStep
 from app.schemas.test_case import TestCaseCreate
 
 
-def list_scenarios(db: Session, prompt_id: int | None = None) -> list[TestCase]:
+def list_test_cases(db: Session, prompt_id: int | None = None) -> list[TestCase]:
     query = db.query(TestCase)
     if prompt_id is not None:
         query = query.filter(TestCase.prompt_id == prompt_id)
     return query.order_by(TestCase.created_at.desc()).all()
 
 
-def get_scenario(db: Session, scenario_id: int) -> TestCase:
-    tc = db.query(TestCase).filter(TestCase.id == scenario_id).first()
+def get_test_case(db: Session, test_case_id: int) -> TestCase:
+    tc = db.query(TestCase).filter(TestCase.id == test_case_id).first()
     if not tc:
-        raise HTTPException(status_code=404, detail="Scenario not found")
+        raise HTTPException(status_code=404, detail="Test case not found")
     return tc
 
 
-def create_scenario(db: Session, payload: TestCaseCreate) -> TestCase:
+def create_test_case(db: Session, payload: TestCaseCreate) -> TestCase:
     validate_steps(payload.type, [s.step_number for s in payload.steps])
 
     test_case = TestCase(
@@ -54,35 +54,35 @@ def create_scenario(db: Session, payload: TestCaseCreate) -> TestCase:
     return test_case
 
 
-def delete_scenario(db: Session, scenario_id: int) -> None:
-    tc = get_scenario(db, scenario_id)
+def delete_test_case(db: Session, test_case_id: int) -> None:
+    tc = get_test_case(db, test_case_id)
     db.delete(tc)
     db.commit()
 
 
-def validate_steps(scenario_type: TestCaseType, step_numbers: list[int]) -> None:
+def validate_steps(test_case_type: TestCaseType, step_numbers: list[int]) -> None:
     """
     Enforce step-ordering invariants:
-      - SINGLE_TURN scenarios must have exactly one step.
-      - MULTI_TURN scenarios must have >= 2 steps.
+      - SINGLE_TURN test cases must have exactly one step.
+      - MULTI_TURN test cases must have >= 2 steps.
       - Step numbers must form a contiguous 1..N sequence with no duplicates.
 
     Raises HTTPException(422) on any violation so FastAPI surfaces it cleanly.
     """
     n = len(step_numbers)
     if n == 0:
-        raise HTTPException(status_code=422, detail="Scenario must contain at least one step")
+        raise HTTPException(status_code=422, detail="Test case must contain at least one step")
 
-    if scenario_type == TestCaseType.SINGLE_TURN and n != 1:
+    if test_case_type == TestCaseType.SINGLE_TURN and n != 1:
         raise HTTPException(
             status_code=422,
-            detail=f"single_turn scenarios must have exactly 1 step (got {n})",
+            detail=f"single_turn test cases must have exactly 1 step (got {n})",
         )
 
-    if scenario_type == TestCaseType.MULTI_TURN and n < 2:
+    if test_case_type == TestCaseType.MULTI_TURN and n < 2:
         raise HTTPException(
             status_code=422,
-            detail=f"multi_turn scenarios must have at least 2 steps (got {n})",
+            detail=f"multi_turn test cases must have at least 2 steps (got {n})",
         )
 
     if len(set(step_numbers)) != n:
