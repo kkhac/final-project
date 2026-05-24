@@ -9,6 +9,11 @@ from app.services.providers.base import (
     ProviderResponse,
 )
 
+try:
+    from anthropic import Anthropic
+except ImportError:  # SDK is optional at import time; checked again on first use
+    Anthropic = None
+
 
 class AnthropicProvider(LLMProvider):
     name = "anthropic"
@@ -22,10 +27,8 @@ class AnthropicProvider(LLMProvider):
             return self._client
         if not self._api_key:
             raise ProviderError("ANTHROPIC_API_KEY is not set")
-        try:
-            from anthropic import Anthropic
-        except ImportError as exc:
-            raise ProviderError("anthropic package is not installed") from exc
+        if Anthropic is None:
+            raise ProviderError("anthropic package is not installed")
         self._client = Anthropic(api_key=self._api_key)
         return self._client
 

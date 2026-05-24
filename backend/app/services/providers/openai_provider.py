@@ -9,6 +9,11 @@ from app.services.providers.base import (
     ProviderResponse,
 )
 
+try:
+    from openai import OpenAI
+except ImportError:  # SDK is optional at import time; checked again on first use
+    OpenAI = None
+
 
 class OpenAIProvider(LLMProvider):
     name = "openai"
@@ -22,10 +27,8 @@ class OpenAIProvider(LLMProvider):
             return self._client
         if not self._api_key:
             raise ProviderError("OPENAI_API_KEY is not set")
-        try:
-            from openai import OpenAI
-        except ImportError as exc:
-            raise ProviderError("openai package is not installed") from exc
+        if OpenAI is None:
+            raise ProviderError("openai package is not installed")
         self._client = OpenAI(api_key=self._api_key)
         return self._client
 
