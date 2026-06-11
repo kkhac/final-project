@@ -90,6 +90,10 @@ export const promptsApi = {
     api.get<PromptVersion[]>(`/prompts/${id}/versions`),
   getVersion: (id: number, versionId: number) =>
     api.get<PromptVersion>(`/prompts/${id}/versions/${versionId}`),
+  compare: (promptId: number, v1: number, v2: number) =>
+    api.get<{ version_a: PromptVersion; version_b: PromptVersion }>(
+      `/prompts/${promptId}/versions/compare?v1=${v1}&v2=${v2}`
+    ),
 };
 
 export const testCasesApi = {
