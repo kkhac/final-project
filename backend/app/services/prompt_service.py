@@ -79,3 +79,9 @@ def get_version_or_404(db: Session, prompt_id: int, version_id: int) -> PromptVe
     if not version:
         raise HTTPException(status_code=404, detail="Version not found")
     return version
+
+
+def compare_versions(db: Session, prompt_id: int, v1_id: int, v2_id: int) -> dict:
+    v1 = get_version_or_404(db, prompt_id, v1_id)
+    v2 = get_version_or_404(db, prompt_id, v2_id)
+    return {"version_a": v1, "version_b": v2}
