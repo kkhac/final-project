@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ScenarioBuilder } from "@/components/scenarios/ScenarioBuilder";
+import { ScenarioList } from "@/components/scenarios/ScenarioList";
 
 export default function ScenariosPage() {
   const [building, setBuilding] = useState(false);
@@ -19,11 +20,9 @@ export default function ScenariosPage() {
         )}
       </div>
 
-      {building ? (
-        <ScenarioBuilder onCancel={() => setBuilding(false)} />
-      ) : (
-        <p className="text-gray-400 text-sm">No scenarios yet. Click “+ New Scenario” to start.</p>
-      )}
+      {building && <ScenarioBuilder onCancel={() => setBuilding(false)} />}
+
+      <ScenarioList />
     </div>
   );
 }
