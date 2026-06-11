@@ -86,6 +86,10 @@ export const promptsApi = {
   delete: (id: number) => api.delete(`/prompts/${id}`),
   createVersion: (id: number, data: { system_prompt: string; notes?: string }) =>
     api.post<PromptVersion>(`/prompts/${id}/versions`, data),
+  listVersions: (id: number) =>
+    api.get<PromptVersion[]>(`/prompts/${id}/versions`),
+  getVersion: (id: number, versionId: number) =>
+    api.get<PromptVersion>(`/prompts/${id}/versions/${versionId}`),
 };
 
 export const testCasesApi = {
