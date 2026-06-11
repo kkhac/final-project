@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { promptsApi } from "@/lib/api";
+import { ConversationStepRow, type StepDraft } from "./ConversationStepRow";
 
 type ScenarioType = "single_turn" | "multi_turn";
 
@@ -9,11 +10,26 @@ interface ScenarioBuilderProps {
   onCancel: () => void;
 }
 
+const emptyStep = (step_number: number): StepDraft => ({
+  step_number,
+  user_message: "",
+  expected_behavior: "",
+  expected_keywords: "",
+  expected_format_regex: "",
+});
+
 export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ScenarioType>("single_turn");
   const [promptId, setPromptId] = useState<number | "">("");
+  const [steps, setSteps] = useState<StepDraft[]>([emptyStep(1)]);
+
+  const updateStep = (idx: number, patch: Partial<StepDraft>) => {
+    setSteps((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, ...patch } : s))
+    );
+  };
 
   const { data: prompts = [], isLoading: promptsLoading } = useQuery({
     queryKey: ["prompts"],
@@ -66,6 +82,17 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
           <option value="single_turn">Single turn</option>
           <option value="multi_turn">Multi turn</option>
         </select>
+      </div>
+
+      <div className="space-y-3">
+        <label className="block text-xs text-gray-500">Conversation steps</label>
+        {steps.map((step, idx) => (
+          <ConversationStepRow
+            key={idx}
+            step={step}
+            onChange={(patch) => updateStep(idx, patch)}
+          />
+        ))}
       </div>
 
       <div className="flex gap-2">
