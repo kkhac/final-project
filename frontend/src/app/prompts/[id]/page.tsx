@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { VersionHistory } from "@/components/prompts/VersionHistory";
 import { VersionComparison } from "@/components/prompts/VersionComparison";
+import { EvaluationHistory } from "@/components/evaluations/EvaluationHistory";
 import { promptsApi } from "@/lib/api";
 
 export default function PromptDetailPage() {
@@ -40,6 +41,7 @@ export default function PromptDetailPage() {
       {versions.length >= 2 && (
         <VersionComparison promptId={promptId} versions={versions} />
       )}
+      <EvaluationHistory promptId={promptId} versions={versions} />
     </div>
   );
 }
