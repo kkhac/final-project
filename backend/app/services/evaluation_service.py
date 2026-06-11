@@ -7,6 +7,7 @@ from datetime import datetime
 
 from app.database import SessionLocal
 from app.models.evaluation import EvaluationRun, EvaluationResult, RunStatus
+from app.services.providers import ChatMessage, ProviderError, get_provider
 
 
 def run_evaluation(run_id: int) -> None:
@@ -62,12 +63,16 @@ def run_evaluation(run_id: int) -> None:
 
 
 def _call_llm(provider: str, model: str, system_prompt: str, user_message: str) -> str:
-    """
-    Provider abstraction — Week 2 will expand this into a full Provider Layer.
-    For now returns a placeholder so the pipeline runs end-to-end.
-    """
-    # TODO (Week 2, feature/provider-layer): replace with real API calls
-    return f"[STUB] Response from {provider}/{model} for: {user_message[:50]}"
+    try:
+        llm = get_provider(provider)
+        resp = llm.complete(
+            system_prompt=system_prompt,
+            messages=[ChatMessage(role="user", content=user_message)],
+            model=model,
+        )
+        return resp.text
+    except ProviderError:
+        return f"[STUB] Response from {provider}/{model} for: {user_message[:50]}"
 
 
 def _rule_based_check(
