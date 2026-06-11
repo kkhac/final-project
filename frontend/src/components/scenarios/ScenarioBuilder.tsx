@@ -43,6 +43,15 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
     );
   };
 
+  const changeType = (next: ScenarioType) => {
+    setType(next);
+    if (next === "single_turn") {
+      setSteps((prev) => prev.slice(0, 1));
+    }
+  };
+
+  const isMulti = type === "multi_turn";
+
   const { data: prompts = [], isLoading: promptsLoading } = useQuery({
     queryKey: ["prompts"],
     queryFn: () => promptsApi.list().then((r) => r.data),
@@ -89,7 +98,7 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
         <select
           className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
           value={type}
-          onChange={(e) => setType(e.target.value as ScenarioType)}
+          onChange={(e) => changeType(e.target.value as ScenarioType)}
         >
           <option value="single_turn">Single turn</option>
           <option value="multi_turn">Multi turn</option>
@@ -97,22 +106,26 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
       </div>
 
       <div className="space-y-3">
-        <label className="block text-xs text-gray-500">Conversation steps</label>
+        <label className="block text-xs text-gray-500">
+          {isMulti ? "Conversation steps" : "User message"}
+        </label>
         {steps.map((step, idx) => (
           <ConversationStepRow
             key={idx}
             step={step}
             onChange={(patch) => updateStep(idx, patch)}
-            onRemove={steps.length > 1 ? () => removeStep(idx) : undefined}
+            onRemove={isMulti && steps.length > 1 ? () => removeStep(idx) : undefined}
           />
         ))}
-        <button
-          type="button"
-          onClick={addStep}
-          className="text-sm text-indigo-600 hover:text-indigo-800"
-        >
-          + Add step
-        </button>
+        {isMulti && (
+          <button
+            type="button"
+            onClick={addStep}
+            className="text-sm text-indigo-600 hover:text-indigo-800"
+          >
+            + Add step
+          </button>
+        )}
       </div>
 
       <div className="flex gap-2">
