@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.models.evaluation import EvaluationRun, EvaluationResult, RunStatus
+from app.models.prompt import PromptVersion, Prompt
 
 
 def get_run_or_404(db: Session, run_id: int) -> EvaluationRun:
@@ -39,7 +40,6 @@ def list_results(db: Session, run_id: int) -> list[EvaluationResult]:
 
 
 def get_prompt_run_history(db: Session, prompt_id: int) -> list[EvaluationRun]:
-    from app.models.prompt import PromptVersion, Prompt
     prompt = db.query(Prompt).filter(Prompt.id == prompt_id).first()
     if not prompt:
         raise HTTPException(status_code=404, detail="Prompt not found")
@@ -50,3 +50,21 @@ def get_prompt_run_history(db: Session, prompt_id: int) -> list[EvaluationRun]:
         .order_by(EvaluationRun.created_at.desc())
         .all()
     )
+
+def create_evaluation_run(
+    db: Session,
+    prompt_version_id: int,
+    test_case_id: int,
+    model_provider: str,
+    model_name: str,
+) -> EvaluationRun:
+    run = EvaluationRun(
+        prompt_version_id=prompt_version_id,
+        test_case_id=test_case_id,
+        model_provider=model_provider,
+        model_name=model_name,
+    )
+    db.add(run)
+    db.commit()
+    db.refresh(run)
+    return run

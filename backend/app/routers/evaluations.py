@@ -9,6 +9,7 @@ from app.services.evaluation_crud_service import (
     get_run_or_404, list_runs, list_results, get_prompt_run_history
 )
 from app.services.evaluation_service import run_evaluation
+from app.models.evaluation import EvaluationRun
 
 router = APIRouter(prefix="/evaluations", tags=["evaluations"])
 
@@ -19,16 +20,13 @@ def trigger_evaluation(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    from app.models.evaluation import EvaluationRun
-    run = EvaluationRun(
+    run = evaluation_crud_service.create_evaluation_run(
+        db=db,
         prompt_version_id=payload.prompt_version_id,
         test_case_id=payload.test_case_id,
         model_provider=payload.model_provider,
         model_name=payload.model_name,
     )
-    db.add(run)
-    db.commit()
-    db.refresh(run)
     background_tasks.add_task(run_evaluation, run.id)
     return run
 
