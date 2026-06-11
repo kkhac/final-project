@@ -78,8 +78,20 @@ def _rule_based_check(
     """
     Deterministic checks — Barbare's module (feature/rule-based-eval).
     """
+    # if the LLM returns blank, everything fails immediately
+    if not response or not response.strip():
+        return False, False, {
+            "expected_keywords": expected_keywords,
+            "matched_keywords": [],
+            "missing_keywords": expected_keywords,
+            "empty_response": True,
+            "regex_pattern": regex_pattern,
+            "regex_match": False,
+        }
+
     matched = [kw for kw in expected_keywords if kw.lower() in response.lower()]
-    keyword_passed = len(matched) == len(expected_keywords)
+    missing = [kw for kw in expected_keywords if kw.lower() not in response.lower()]
+    keyword_passed = len(missing) == 0
 
     format_passed = True
     if regex_pattern:
@@ -88,9 +100,13 @@ def _rule_based_check(
     details = {
         "expected_keywords": expected_keywords,
         "matched_keywords": matched,
+        "missing_keywords": missing,
+        "empty_response": False,
         "regex_pattern": regex_pattern,
         "regex_match": format_passed,
     }
+    # explicitly missing_keywords tracked instead of having to infer it
+
     return keyword_passed, format_passed, details
 
 
