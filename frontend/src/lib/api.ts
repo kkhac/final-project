@@ -115,4 +115,5 @@ export const evaluationsApi = {
   list: (promptVersionId?: number) =>
     api.get<EvaluationRun[]>("/evaluations/", { params: { prompt_version_id: promptVersionId } }),
   get: (id: number) => api.get<EvaluationRun>(`/evaluations/${id}`),
+  getHistory: (promptId: number) => api.get<EvaluationRun[]>(`/evaluations/history/${promptId}`),
 };
