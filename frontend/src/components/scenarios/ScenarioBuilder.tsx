@@ -31,6 +31,18 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
     );
   };
 
+  const addStep = () => {
+    setSteps((prev) => [...prev, emptyStep(prev.length + 1)]);
+  };
+
+  const removeStep = (idx: number) => {
+    setSteps((prev) =>
+      prev
+        .filter((_, i) => i !== idx)
+        .map((s, i) => ({ ...s, step_number: i + 1 }))
+    );
+  };
+
   const { data: prompts = [], isLoading: promptsLoading } = useQuery({
     queryKey: ["prompts"],
     queryFn: () => promptsApi.list().then((r) => r.data),
@@ -91,8 +103,16 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
             key={idx}
             step={step}
             onChange={(patch) => updateStep(idx, patch)}
+            onRemove={steps.length > 1 ? () => removeStep(idx) : undefined}
           />
         ))}
+        <button
+          type="button"
+          onClick={addStep}
+          className="text-sm text-indigo-600 hover:text-indigo-800"
+        >
+          + Add step
+        </button>
       </div>
 
       <div className="flex gap-2">

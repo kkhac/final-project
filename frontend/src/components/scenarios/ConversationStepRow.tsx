@@ -11,15 +11,25 @@ export interface StepDraft {
 interface ConversationStepRowProps {
   step: StepDraft;
   onChange: (patch: Partial<StepDraft>) => void;
+  onRemove?: () => void;
 }
 
-export function ConversationStepRow({ step, onChange }: ConversationStepRowProps) {
+export function ConversationStepRow({ step, onChange, onRemove }: ConversationStepRowProps) {
   return (
     <div className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50">
       <div className="flex items-center justify-between">
         <span className="text-sm font-semibold text-gray-700">
           Step {step.step_number}
         </span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-red-400 hover:text-red-600"
+          >
+            Remove
+          </button>
+        )}
       </div>
 
       <textarea
