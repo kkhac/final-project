@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { promptsApi } from "@/lib/api";
 
 type ScenarioType = "single_turn" | "multi_turn";
 
@@ -11,6 +13,12 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ScenarioType>("single_turn");
+  const [promptId, setPromptId] = useState<number | "">("");
+
+  const { data: prompts = [], isLoading: promptsLoading } = useQuery({
+    queryKey: ["prompts"],
+    queryFn: () => promptsApi.list().then((r) => r.data),
+  });
 
   return (
     <div className="mb-6 bg-white border border-indigo-200 rounded-xl p-5 shadow-sm space-y-4">
@@ -28,6 +36,25 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
+
+      <div>
+        <label className="block text-xs text-gray-500 mb-1">Prompt *</label>
+        <select
+          className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white disabled:bg-gray-50"
+          value={promptId}
+          onChange={(e) => setPromptId(e.target.value ? Number(e.target.value) : "")}
+          disabled={promptsLoading}
+        >
+          <option value="">
+            {promptsLoading ? "Loading prompts…" : "Select a prompt"}
+          </option>
+          {prompts.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div>
         <label className="block text-xs text-gray-500 mb-1">Type</label>
