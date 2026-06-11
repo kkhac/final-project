@@ -6,7 +6,8 @@ from app.database import get_db
 from app.models.evaluation import RunStatus
 from app.schemas.evaluation import EvaluationRunCreate, EvaluationRunRead, EvaluationResultRead
 from app.services.evaluation_crud_service import (
-    get_run_or_404, list_runs, list_results, get_prompt_run_history
+    get_run_or_404, list_runs, list_results, get_prompt_run_history,
+    create_evaluation_run,
 )
 from app.services.evaluation_service import run_evaluation
 from app.models.evaluation import EvaluationRun
@@ -20,7 +21,7 @@ def trigger_evaluation(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    run = evaluation_crud_service.create_evaluation_run(
+    run = create_evaluation_run(
         db=db,
         prompt_version_id=payload.prompt_version_id,
         test_case_id=payload.test_case_id,
