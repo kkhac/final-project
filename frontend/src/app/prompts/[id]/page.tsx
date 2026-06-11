@@ -5,6 +5,7 @@ import Link from "next/link";
 import { VersionHistory } from "@/components/prompts/VersionHistory";
 import { VersionComparison } from "@/components/prompts/VersionComparison";
 import { EvaluationHistory } from "@/components/evaluations/EvaluationHistory";
+import { FailureAnalysis } from "@/components/evaluations/FailureAnalysis";
 import { promptsApi } from "@/lib/api";
 
 export default function PromptDetailPage() {
@@ -42,6 +43,7 @@ export default function PromptDetailPage() {
         <VersionComparison promptId={promptId} versions={versions} />
       )}
       <EvaluationHistory promptId={promptId} versions={versions} />
+      <FailureAnalysis promptId={promptId} versions={versions} />
     </div>
   );
 }
