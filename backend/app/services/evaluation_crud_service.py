@@ -21,7 +21,6 @@ def list_runs(
     if prompt_version_id:
         query = query.filter(EvaluationRun.prompt_version_id == prompt_version_id)
     if prompt_id:
-        from app.models.prompt import PromptVersion
         version_ids = db.query(PromptVersion.id).filter(PromptVersion.prompt_id == prompt_id)
         query = query.filter(EvaluationRun.prompt_version_id.in_(version_ids))
     if status:
