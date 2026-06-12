@@ -6,11 +6,13 @@ from app.services.providers.base import (
     ProviderError,
     ProviderResponse,
 )
+from app.services.providers.ollama_provider import OllamaProvider
 from app.services.providers.openai_provider import OpenAIProvider
 
 _REGISTRY: dict[str, type[LLMProvider]] = {
     "openai": OpenAIProvider,
     "anthropic": AnthropicProvider,
+    "ollama": OllamaProvider,
 }
 
 
