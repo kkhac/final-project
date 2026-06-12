@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List } from "lucide-react";
 
 const nav = [
   { href: "/",            icon: LayoutDashboard, label: "Dashboard"   },
   { href: "/prompts",     icon: FileText,        label: "Prompts"     },
   { href: "/scenarios",   icon: FlaskConical,    label: "Scenarios"   },
   { href: "/evaluations", icon: BarChart3,       label: "Evaluations" },
+  { href: "/runs",        icon: List,            label: "Runs"        },
 ];
 
 export function Sidebar() {
