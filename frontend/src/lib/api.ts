@@ -105,6 +105,30 @@ export const testCasesApi = {
   delete: (id: number) => api.delete(`/test-cases/${id}`),
 };
 
+export interface DashboardStats {
+  total_prompts: number;
+  total_test_cases: number;
+  total_runs: number;
+  avg_score: number | null;
+}
+
+export interface RecentRun {
+  id: number;
+  prompt_name: string;
+  test_case_name: string;
+  model_provider: string;
+  model_name: string;
+  status: "pending" | "running" | "completed" | "failed";
+  overall_score: number | null;
+  created_at: string;
+}
+
+export const dashboardApi = {
+  getStats: () => api.get<DashboardStats>("/dashboard/stats"),
+  getRecentRuns: (limit = 10) =>
+    api.get<RecentRun[]>("/dashboard/recent-runs", { params: { limit } }),
+};
+
 export const evaluationsApi = {
   trigger: (data: {
     prompt_version_id: number;
