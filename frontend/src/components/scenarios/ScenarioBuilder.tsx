@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { promptsApi } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { promptsApi, testCasesApi } from "@/lib/api";
 import { ConversationStepRow, type StepDraft } from "./ConversationStepRow";
 
 type ScenarioType = "single_turn" | "multi_turn";
@@ -19,11 +19,48 @@ const emptyStep = (step_number: number): StepDraft => ({
 });
 
 export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
+  const qc = useQueryClient();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<ScenarioType>("single_turn");
   const [promptId, setPromptId] = useState<number | "">("");
   const [steps, setSteps] = useState<StepDraft[]>([emptyStep(1)]);
+
+  const create = useMutation({
+    mutationFn: () => {
+      if (promptId === "") throw new Error("Prompt is required");
+      return testCasesApi
+        .create({
+          prompt_id: promptId,
+          name,
+          description: description || null,
+          type,
+          tags: [],
+          steps: steps.map((s) => ({
+            id: 0,
+            step_number: s.step_number,
+            user_message: s.user_message,
+            expected_behavior: s.expected_behavior || null,
+            expected_keywords: s.expected_keywords
+              .split(",")
+              .map((k) => k.trim())
+              .filter(Boolean),
+            expected_format_regex: s.expected_format_regex || null,
+          })),
+        })
+        .then((r) => r.data);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["test-cases"] });
+      onCancel();
+    },
+  });
+
+  const canSubmit =
+    !!name.trim() &&
+    promptId !== "" &&
+    steps.every((s) => s.user_message.trim().length > 0) &&
+    !create.isPending;
 
   const updateStep = (idx: number, patch: Partial<StepDraft>) => {
     setSteps((prev) =>
@@ -128,12 +165,19 @@ export function ScenarioBuilder({ onCancel }: ScenarioBuilderProps) {
         )}
       </div>
 
+      {create.isError && (
+        <p className="text-xs text-red-600">
+          {(create.error as Error)?.message ?? "Failed to create scenario"}
+        </p>
+      )}
+
       <div className="flex gap-2">
         <button
-          disabled
+          onClick={() => create.mutate()}
+          disabled={!canSubmit}
           className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          Create
+          {create.isPending ? "Creating…" : "Create"}
         </button>
         <button
           onClick={onCancel}
