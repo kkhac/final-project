@@ -36,6 +36,7 @@ class EvaluationRunRead(BaseModel):
     model_provider: str
     model_name: str
     status: RunStatus
+    error_message: Optional[str] = None
     started_at: Optional[datetime]
     finished_at: Optional[datetime]
     created_at: datetime
