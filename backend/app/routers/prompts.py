@@ -1,11 +1,12 @@
 from typing import List
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.schemas.prompt import (
     PromptCreate, PromptRead, PromptUpdate,
     PromptVersionCreate, PromptVersionRead,
+    VersionCompareResponse,
 )
 from app.services import prompt_service
 
@@ -37,6 +38,8 @@ def delete_prompt(prompt_id: int, db: Session = Depends(get_db)):
     prompt_service.delete_prompt(db, prompt_id)
 
 
+# --- Versions ---
+
 @router.get("/{prompt_id}/versions", response_model=List[PromptVersionRead])
 def list_versions(prompt_id: int, db: Session = Depends(get_db)):
     return prompt_service.list_versions(db, prompt_id)
@@ -45,6 +48,16 @@ def list_versions(prompt_id: int, db: Session = Depends(get_db)):
 @router.post("/{prompt_id}/versions", response_model=PromptVersionRead, status_code=201)
 def add_version(prompt_id: int, payload: PromptVersionCreate, db: Session = Depends(get_db)):
     return prompt_service.add_version(db, prompt_id, payload)
+
+
+@router.get("/{prompt_id}/versions/compare", response_model=VersionCompareResponse)
+def compare_versions(
+    prompt_id: int,
+    v1: int = Query(..., description="First version ID"),
+    v2: int = Query(..., description="Second version ID"),
+    db: Session = Depends(get_db),
+):
+    return prompt_service.compare_versions(db, prompt_id, v1, v2)
 
 
 @router.get("/{prompt_id}/versions/{version_id}", response_model=PromptVersionRead)
