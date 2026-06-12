@@ -69,6 +69,16 @@ def _execute_step(
         regex_pattern=step.expected_format_regex,
     )
 
+    # LLM-as-a-Judge
+    judge = judge_response(
+        system_prompt=run.prompt_version.system_prompt,
+        user_message=step.user_message,
+        llm_response=llm_response,
+        expected_behavior=step.expected_behavior,
+        judge_provider="openai",
+        judge_model="gpt-4o-mini",
+    )
+
     db.add(EvaluationResult(
         run_id=run.id,
         step_number=step.step_number,
@@ -76,7 +86,11 @@ def _execute_step(
         keyword_check_passed=keyword_passed,
         format_check_passed=format_passed,
         rule_details=rule_details,
-        score=_composite_score(keyword_passed, format_passed, None),
+        judge_score=judge["score"],
+        judge_reasoning=judge["reasoning"],
+        failure_category=judge["category"] if judge["score"] < FAILURE_THRESHOLD else None,
+        failure_reason=judge["reasoning"] if judge["score"] < FAILURE_THRESHOLD else None,
+        score=_composite_score(keyword_passed, format_passed, judge["score"]),
     ))
     db.commit()
 
