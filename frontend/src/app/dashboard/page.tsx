@@ -21,7 +21,7 @@ export default function DashboardPage() {
           value={isLoading ? "…" : String(data?.total_test_cases ?? 0)}
         />
         <StatCard
-          label="Last Run Score"
+          label="Avg Score"
           value={
             isLoading
               ? "…"
