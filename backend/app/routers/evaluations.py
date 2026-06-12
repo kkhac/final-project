@@ -6,11 +6,13 @@ from app.database import get_db
 from app.models.evaluation import RunStatus
 from app.schemas.evaluation import EvaluationRunCreate, EvaluationRunRead, EvaluationResultRead
 from app.services.evaluation_crud_service import (
-    get_run_or_404, list_runs, list_results, get_prompt_run_history,
     create_evaluation_run,
+    get_run_or_404,
+    list_runs,
+    list_results,
+    get_prompt_run_history,
 )
 from app.services.evaluation_service import run_evaluation
-from app.models.evaluation import EvaluationRun
 
 router = APIRouter(prefix="/evaluations", tags=["evaluations"])
 
@@ -30,6 +32,25 @@ def trigger_evaluation(
     )
     background_tasks.add_task(run_evaluation, run.id)
     return run
+
+
+@router.post("/{run_id}/retry", response_model=EvaluationRunRead, status_code=201)
+def retry_evaluation(
+    run_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Clone a previous run with the same prompt/test case/model and schedule it."""
+    previous = get_run_or_404(db, run_id)
+    new_run = create_evaluation_run(
+        db=db,
+        prompt_version_id=previous.prompt_version_id,
+        test_case_id=previous.test_case_id,
+        model_provider=previous.model_provider,
+        model_name=previous.model_name,
+    )
+    background_tasks.add_task(run_evaluation, new_run.id)
+    return new_run
 
 
 @router.get("/", response_model=List[EvaluationRunRead])
