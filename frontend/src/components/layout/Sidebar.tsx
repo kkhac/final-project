@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List, GitCompare } from "lucide-react";
 
 const nav = [
   { href: "/",            icon: LayoutDashboard, label: "Dashboard"   },
@@ -9,6 +9,7 @@ const nav = [
   { href: "/scenarios",   icon: FlaskConical,    label: "Scenarios"   },
   { href: "/evaluations", icon: BarChart3,       label: "Evaluations" },
   { href: "/runs",        icon: List,            label: "Runs"        },
+  { href: "/compare",    icon: GitCompare,      label: "Compare"     },
 ];
 
 export function Sidebar() {

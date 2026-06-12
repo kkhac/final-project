@@ -4,11 +4,12 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { promptsApi, testCasesApi, evaluationsApi } from "@/lib/api";
 import type { EvaluationRun } from "@/lib/api";
 
-const PROVIDERS = ["openai", "anthropic"] as const;
+const PROVIDERS = ["openai", "anthropic", "ollama"] as const;
 type Provider = typeof PROVIDERS[number];
 const MODELS: Record<Provider, string[]> = {
   openai: ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"],
   anthropic: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-3-haiku-20240307"],
+  ollama: ["llama3", "llama3:8b", "llama3:70b", "mistral", "phi3"],
 };
 
 function StatusBadge({ status, score }: { status: string; score: number | null }) {
