@@ -1,6 +1,7 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import { dashboardApi } from "@/lib/api";
+import { RecentRunsChart } from "@/components/dashboard/RecentRunsChart";
 
 export default function DashboardPage() {
   const { data, isLoading } = useQuery({
@@ -30,6 +31,10 @@ export default function DashboardPage() {
               : "—"
           }
         />
+      </div>
+
+      <div className="mt-6">
+        <RecentRunsChart />
       </div>
     </div>
   );
