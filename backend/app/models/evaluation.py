@@ -23,6 +23,7 @@ class EvaluationRun(Base):
     model_provider = Column(String(50), nullable=False)   # "openai", "anthropic", "ollama"
     model_name = Column(String(100), nullable=False)       # "gpt-4o", "claude-3-5-sonnet", etc.
     status = Column(Enum(RunStatus), default=RunStatus.PENDING)
+    error_message = Column(Text, nullable=True)
     started_at = Column(DateTime, nullable=True)
     finished_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
