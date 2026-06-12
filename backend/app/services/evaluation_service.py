@@ -8,6 +8,7 @@ from datetime import datetime
 from app.database import SessionLocal
 from app.models.evaluation import EvaluationRun, EvaluationResult, RunStatus
 from app.services.providers import ChatMessage, ProviderError, get_provider
+from app.services.judge_service import judge_response, FAILURE_THRESHOLD
 
 
 def run_evaluation(run_id: int) -> None:
@@ -39,6 +40,16 @@ def run_evaluation(run_id: int) -> None:
                 regex_pattern=step.expected_format_regex,
             )
 
+            judge = judge_response(
+                system_prompt=prompt_version.system_prompt,
+                user_message=step.user_message,
+                llm_response=llm_response,
+                expected_behavior=step.expected_behavior,
+                judge_provider=run.model_provider,
+                judge_model=run.model_name,
+            )
+
+            is_failure = judge["score"] < FAILURE_THRESHOLD
             result = EvaluationResult(
                 run_id=run.id,
                 step_number=step.step_number,
@@ -46,7 +57,11 @@ def run_evaluation(run_id: int) -> None:
                 keyword_check_passed=keyword_passed,
                 format_check_passed=format_passed,
                 rule_details=rule_details,
-                score=_composite_score(keyword_passed, format_passed, None),
+                judge_score=judge["score"],
+                judge_reasoning=judge["reasoning"],
+                failure_reason=judge["reasoning"] if is_failure else None,
+                failure_category=judge["category"] if is_failure else None,
+                score=_composite_score(keyword_passed, format_passed, judge["score"]),
             )
             db.add(result)
 
