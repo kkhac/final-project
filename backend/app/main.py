@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
-from app.routers import prompts, test_cases, evaluations
+from app.routers import prompts, test_cases, evaluations, dashboard
 
 # Create all tables on startup (switch to Alembic migrations in production)
 Base.metadata.create_all(bind=engine)
@@ -24,6 +24,7 @@ app.add_middleware(
 app.include_router(prompts.router)
 app.include_router(test_cases.router)
 app.include_router(evaluations.router)
+app.include_router(dashboard.router)
 
 
 @app.get("/health")
