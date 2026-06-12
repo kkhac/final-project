@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models.evaluation import EvaluationRun, EvaluationResult, RunStatus
-from app.services.providers import ChatMessage, get_provider
+from app.services.providers import ChatMessage, ProviderError, get_provider
+from app.services.judge_service import judge_response, FAILURE_THRESHOLD
 
 
 def run_evaluation(run_id: int) -> None:

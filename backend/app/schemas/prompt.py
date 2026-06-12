@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PromptVersionCreate(BaseModel):
@@ -42,3 +42,9 @@ class PromptRead(BaseModel):
 class PromptUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+
+
+class VersionCompareResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    version_a: PromptVersionRead
+    version_b: PromptVersionRead
