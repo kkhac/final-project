@@ -146,3 +146,82 @@ function QuickAction({ href, title, description, Icon }: {
     </Link>
   );
 }
+
+function QuickAction({ href, title, description, Icon }: {
+  href: string; title: string; description: string; Icon: React.ElementType;
+}) {
+  return (
+    <Link href={href} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center">
+          <Icon size={18} className="text-indigo-600" />
+        </div>
+        <ArrowRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+      </div>
+      <p className="font-semibold text-gray-800 text-sm mb-1">{title}</p>
+      <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+    </Link>
+  );
+}
+
+function StatCard({ label, value, Icon, bg, fg }: {
+  label: string; value: string; Icon: React.ElementType; bg: string; fg: string;
+}) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
+          <Icon size={16} className={fg} />
+        </div>
+      </div>
+      <p className="text-3xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function QuickAction({ href, title, description, Icon }: {
+  href: string; title: string; description: string; Icon: React.ElementType;
+}) {
+  return (
+    <Link href={href} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center">
+          <Icon size={18} className="text-indigo-600" />
+        </div>
+        <ArrowRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+      </div>
+      <p className="font-semibold text-gray-800 text-sm mb-1">{title}</p>
+      <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+    </Link>
+  );
+}
+
+function StatCard({ label, value, Icon, bg, fg }: { label: string; value: string; Icon: React.ElementType; bg: string; fg: string }) {
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">{label}</span>
+        <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
+          <Icon size={16} className={fg} />
+        </div>
+      </div>
+      <p className="text-3xl font-bold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function QuickAction({ href, title, description, Icon }: { href: string; title: string; description: string; Icon: React.ElementType }) {
+  return (
+    <Link href={href} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group">
+      <div className="flex items-center justify-between mb-3">
+        <div className="w-9 h-9 bg-indigo-50 rounded-lg flex items-center justify-center">
+          <Icon size={18} className="text-indigo-600" />
+        </div>
+        <ArrowRight size={16} className="text-gray-300 group-hover:text-indigo-500 transition-colors" />
+      </div>
+      <p className="font-semibold text-gray-800 text-sm mb-1">{title}</p>
+      <p className="text-xs text-gray-500 leading-relaxed">{description}</p>
+    </Link>
+  );
+}
