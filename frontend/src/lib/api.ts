@@ -86,6 +86,14 @@ export const promptsApi = {
   delete: (id: number) => api.delete(`/prompts/${id}`),
   createVersion: (id: number, data: { system_prompt: string; notes?: string }) =>
     api.post<PromptVersion>(`/prompts/${id}/versions`, data),
+  listVersions: (id: number) =>
+    api.get<PromptVersion[]>(`/prompts/${id}/versions`),
+  getVersion: (id: number, versionId: number) =>
+    api.get<PromptVersion>(`/prompts/${id}/versions/${versionId}`),
+  compare: (promptId: number, v1: number, v2: number) =>
+    api.get<{ version_a: PromptVersion; version_b: PromptVersion }>(
+      `/prompts/${promptId}/versions/compare?v1=${v1}&v2=${v2}`
+    ),
 };
 
 export const testCasesApi = {
@@ -95,6 +103,30 @@ export const testCasesApi = {
   create: (data: Omit<TestCase, "id" | "created_at" | "updated_at">) =>
     api.post<TestCase>("/test-cases/", data),
   delete: (id: number) => api.delete(`/test-cases/${id}`),
+};
+
+export interface DashboardStats {
+  total_prompts: number;
+  total_test_cases: number;
+  total_runs: number;
+  avg_score: number | null;
+}
+
+export interface RecentRun {
+  id: number;
+  prompt_name: string;
+  test_case_name: string;
+  model_provider: string;
+  model_name: string;
+  status: "pending" | "running" | "completed" | "failed";
+  overall_score: number | null;
+  created_at: string;
+}
+
+export const dashboardApi = {
+  getStats: () => api.get<DashboardStats>("/dashboard/stats"),
+  getRecentRuns: (limit = 10) =>
+    api.get<RecentRun[]>("/dashboard/recent-runs", { params: { limit } }),
 };
 
 export const evaluationsApi = {
@@ -107,4 +139,5 @@ export const evaluationsApi = {
   list: (promptVersionId?: number) =>
     api.get<EvaluationRun[]>("/evaluations/", { params: { prompt_version_id: promptVersionId } }),
   get: (id: number) => api.get<EvaluationRun>(`/evaluations/${id}`),
+  getHistory: (promptId: number) => api.get<EvaluationRun[]>(`/evaluations/history/${promptId}`),
 };

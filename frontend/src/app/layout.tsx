@@ -8,22 +8,16 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "LLM Prompt Testing Platform",
-  description: "Regression testing for LLM prompts and conversations",
+  description: "Prompt regression testing for LLM systems",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={`${inter.className} bg-gray-50 antialiased`}>
         <Providers>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto p-6">{children}</main>
-          </div>
+          <Sidebar />
+          <main className="ml-60 min-h-screen">{children}</main>
         </Providers>
       </body>
     </html>

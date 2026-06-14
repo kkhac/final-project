@@ -1,14 +1,12 @@
+import { PromptEditor } from "@/components/prompts/PromptEditor";
+import { PromptList } from "@/components/prompts/PromptList";
+
 export default function PromptsPage() {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Prompts</h1>
-        <button className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors">
-          + New Prompt
-        </button>
-      </div>
-      {/* TODO (Week 2, feature/prompt-management): PromptList + PromptEditor components */}
-      <p className="text-gray-400 text-sm">Prompt list coming in Week 2.</p>
+    <div className="max-w-2xl mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Prompts</h1>
+      <PromptEditor />
+      <PromptList />
     </div>
   );
 }

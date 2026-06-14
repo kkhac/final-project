@@ -1,16 +1,41 @@
+"use client";
+import { useQuery } from "@tanstack/react-query";
+import { dashboardApi } from "@/lib/api";
+import { RecentRunsChart } from "@/components/dashboard/RecentRunsChart";
+
 export default function DashboardPage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard", "stats"],
+    queryFn: () => dashboardApi.getStats().then((r) => r.data),
+  });
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
-      {/* TODO (Week 3, feature/dashboard): add stats cards, charts, recent runs */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard label="Total Prompts" value="—" />
-        <StatCard label="Test Cases" value="—" />
-        <StatCard label="Last Run Score" value="—" />
+        <StatCard
+          label="Total Prompts"
+          value={isLoading ? "…" : String(data?.total_prompts ?? 0)}
+        />
+        <StatCard
+          label="Test Cases"
+          value={isLoading ? "…" : String(data?.total_test_cases ?? 0)}
+        />
+        <StatCard
+          label="Avg Score"
+          value={
+            isLoading
+              ? "…"
+              : data?.avg_score != null
+              ? data.avg_score.toFixed(2)
+              : "—"
+          }
+        />
       </div>
-      <p className="mt-8 text-gray-400 text-sm">
-        Dashboard will be populated in Week 3 (feature/dashboard branch).
-      </p>
+
+      <div className="mt-6">
+        <RecentRunsChart />
+      </div>
     </div>
   );
 }
