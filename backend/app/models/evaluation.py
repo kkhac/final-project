@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Float, JSON, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy import UniqueConstraint
 import enum
 
 from app.database import Base
@@ -34,6 +35,8 @@ class EvaluationRun(Base):
 
     @property
     def overall_score(self):
+        if self.status == RunStatus.FAILED:
+            return None
         if not self.results:
             return None
         scores = [r.score for r in self.results if r.score is not None]
@@ -43,6 +46,9 @@ class EvaluationRun(Base):
 class EvaluationResult(Base):
     """Result for one step/turn of a test case."""
     __tablename__ = "evaluation_results"
+    __table_args__ = (
+        UniqueConstraint("run_id", "step_number", name="uq_run_step"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     run_id = Column(Integer, ForeignKey("evaluation_runs.id"), nullable=False)
