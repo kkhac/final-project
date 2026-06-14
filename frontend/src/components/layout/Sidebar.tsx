@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List, GitCompare } from "lucide-react";
+import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List, GitCompare, LogOut } from "lucide-react";
+import { useAuth } from "./AuthContext";
 
 const nav = [
   { href: "/",            icon: LayoutDashboard, label: "Dashboard"   },
@@ -14,6 +15,10 @@ const nav = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const initial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
+  const displayName = user?.name || user?.email || "";
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-60 bg-slate-900 flex flex-col z-10">
@@ -51,9 +56,33 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-slate-700">
-        <p className="text-slate-600 text-xs text-center">v1.0 · MVP</p>
-      </div>
+      {/* User panel */}
+      {user && (
+        <div className="px-3 py-3 border-t border-slate-700">
+          <div className="flex items-center gap-3 px-2 py-2">
+            {user.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatar_url} alt="" className="w-8 h-8 rounded-full" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
+                {initial}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-white truncate">{displayName}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-1 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <LogOut size={14} />
+            Sign out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }
