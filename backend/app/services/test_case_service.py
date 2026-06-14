@@ -1,15 +1,9 @@
-"""
-Test Case Service — orchestrates test-case persistence and validates
-multi-turn step ordering. Owned by Ketevan (feature/scenario-builder).
-
-A TestCase groups one or more ConversationSteps that exercise a Prompt
-against an LLM (the plan refers to these as "scenarios").
-"""
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.test_case import TestCase, TestCaseType, ConversationStep
 from app.schemas.test_case import TestCaseCreate
+from app.models.evaluation import EvaluationRun
 
 
 def list_test_cases(db: Session, prompt_id: int | None = None) -> list[TestCase]:
@@ -56,6 +50,9 @@ def create_test_case(db: Session, payload: TestCaseCreate) -> TestCase:
 
 def delete_test_case(db: Session, test_case_id: int) -> None:
     tc = get_test_case(db, test_case_id)
+    db.query(EvaluationRun).filter(
+        EvaluationRun.test_case_id == test_case_id
+    ).delete(synchronize_session=False)
     db.delete(tc)
     db.commit()
 

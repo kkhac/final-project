@@ -3,6 +3,7 @@ from fastapi import HTTPException
 
 from app.models.prompt import Prompt, PromptVersion
 from app.schemas.prompt import PromptCreate, PromptUpdate, PromptVersionCreate
+from app.models.evaluation import EvaluationRun
 
 
 def get_prompt_or_404(db: Session, prompt_id: int) -> Prompt:
@@ -45,6 +46,11 @@ def update_prompt(db: Session, prompt_id: int, payload: PromptUpdate) -> Prompt:
 
 def delete_prompt(db: Session, prompt_id: int) -> None:
     prompt = get_prompt_or_404(db, prompt_id)
+    version_ids = [v.id for v in prompt.versions]
+    if version_ids:
+        db.query(EvaluationRun).filter(
+            EvaluationRun.prompt_version_id.in_(version_ids)
+        ).delete(synchronize_session=False)
     db.delete(prompt)
     db.commit()
 
