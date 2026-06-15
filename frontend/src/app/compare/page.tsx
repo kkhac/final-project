@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { useState } from "react";
+import { api } from "@/lib/api";
 
 interface Prompt {
   id: number;
@@ -64,14 +64,14 @@ export default function ComparePage() {
 
   const { data: prompts } = useQuery<Prompt[]>({
     queryKey: ["prompts"],
-    queryFn: () => axios.get("/api/prompts/").then((r) => r.data),
+    queryFn: () => api.get("/prompts/").then((r) => r.data),
   });
 
   const { data: runs, isLoading } = useQuery<EvaluationRun[]>({
     queryKey: ["runs", selectedPromptId],
     queryFn: () =>
-      axios
-        .get("/api/evaluations/", { params: { prompt_id: selectedPromptId } })
+      api
+        .get("/evaluations/", { params: { prompt_id: selectedPromptId } })
         .then((r) => r.data),
     enabled: selectedPromptId !== null,
   });

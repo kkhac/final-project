@@ -1,22 +1,8 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import Link from "next/link";
-
-interface EvaluationRun {
-  id: number;
-  prompt_version_id: number;
-  test_case_id: number;
-  model_provider: string;
-  model_name: string;
-  status: "pending" | "running" | "completed" | "failed";
-  overall_score: number | null;
-  created_at: string;
-  started_at: string | null;
-  finished_at: string | null;
-  error_message: string | null;
-}
+import { evaluationsApi, EvaluationRun } from "@/lib/api";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-gray-100 text-gray-700",
@@ -42,7 +28,7 @@ export default function RunsPage() {
     error,
   } = useQuery<EvaluationRun[]>({
     queryKey: ["runs"],
-    queryFn: () => axios.get("/api/evaluations/").then((r) => r.data),
+    queryFn: () => evaluationsApi.list().then((r) => r.data),
   });
 
   if (isLoading)
