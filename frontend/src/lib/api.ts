@@ -1,9 +1,41 @@
 import axios from "axios";
 
+export const AUTH_TOKEN_KEY = "ptest_access_token";
+
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
+
+api.interceptors.request.use((config) => {
+  if (typeof window !== "undefined") {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      typeof window !== "undefined" &&
+      error?.response?.status === 401 &&
+      !window.location.pathname.startsWith("/login") &&
+      !window.location.pathname.startsWith("/register") &&
+      !window.location.pathname.startsWith("/auth/")
+    ) {
+      window.localStorage.removeItem(AUTH_TOKEN_KEY);
+      window.location.assign("/login");
+    }
+    return Promise.reject(error);
+  }
+);
 
 // ---- Types (mirrors backend Pydantic schemas) ----
 

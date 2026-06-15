@@ -11,6 +11,7 @@ A web platform for versioning LLM prompts, managing test scenarios, and automati
 - **Version comparison** — side-by-side score diff between prompt versions
 - **Cross-model comparison** — compare average scores across OpenAI, Anthropic, and Ollama models
 - **Dashboard** — live stats, recent run chart
+- **Authentication** — email/password sign-up and login, plus "Sign in with Google" (OAuth 2.0)
 
 ## Prerequisites
 
@@ -110,6 +111,33 @@ scenarios/
 evaluations/
 
 components/
+
+## Authentication
+
+The app requires sign-in. On first launch you are redirected to `/login` where you can:
+
+- **Register** with email + password (`/register`)
+- **Sign in** with email + password (`/login`)
+- **Sign in with Google** (requires the OAuth setup below)
+
+### Google OAuth setup (optional)
+
+1. Go to the [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials).
+2. Create an OAuth 2.0 Client ID of type *Web application*.
+3. Add `http://localhost:8000/auth/google/callback` to the *Authorized redirect URIs*.
+4. Copy the client ID and secret into `backend/.env`:
+
+   ```env
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   GOOGLE_REDIRECT_URI=http://localhost:8000/auth/google/callback
+   FRONTEND_URL=http://localhost:3000
+   SECRET_KEY=<long-random-string>
+   ```
+
+5. Restart the backend. The "Continue with Google" button will now work; without these env vars the backend returns 503 and the button shows a friendly error.
+
+Tokens are JWTs signed with `SECRET_KEY` (HS256) and stored in `localStorage` on the client. Default lifetime: 7 days (`JWT_EXPIRE_MINUTES`).
 
 ## Using Ollama (Local Models)
 
