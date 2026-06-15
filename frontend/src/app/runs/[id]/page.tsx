@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { api } from "@/lib/api";
 
 interface EvaluationResult {
   id: number;
@@ -75,7 +75,7 @@ export default function RunDetailPage() {
 
   const { data: run, isLoading, error } = useQuery<EvaluationRun>({
     queryKey: ["run", id],
-    queryFn: () => axios.get(`/api/evaluations/${id}`).then((r) => r.data),
+    queryFn: () => api.get(`/evaluations/${id}`).then((r) => r.data),
     refetchInterval: (query) => {
       const s = query.state.data?.status;
       return s === "running" || s === "pending" ? 2000 : false;
