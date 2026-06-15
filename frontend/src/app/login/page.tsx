@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Zap, Mail, Lock, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/layout/AuthContext";
-import { authApi } from "@/lib/auth";
+import { authApi, formatApiError } from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function LoginPage() {
       await loginWithPassword(email, password);
       router.replace(redirectTo);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Sign in failed. Please try again.");
+      setError(formatApiError(err, "Sign in failed. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -44,7 +44,7 @@ export default function LoginPage() {
       const res = await authApi.googleAuthUrl();
       window.location.href = res.data.authorize_url;
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Google sign-in is not available.");
+      setError(formatApiError(err, "Google sign-in is not available."));
       setGoogleLoading(false);
     }
   }

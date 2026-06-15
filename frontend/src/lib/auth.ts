@@ -41,3 +41,17 @@ export function getStoredToken(): string | null {
   if (typeof window === "undefined") return null;
   return window.localStorage.getItem(AUTH_TOKEN_KEY);
 }
+
+export function formatApiError(err: any, fallback: string): string {
+  const detail = err?.response?.data?.detail;
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const msg = detail
+      .map((d: any) => (typeof d === "string" ? d : d?.msg))
+      .filter(Boolean)
+      .join("; ");
+    if (msg) return msg;
+  }
+  if (typeof err?.message === "string") return err.message;
+  return fallback;
+}

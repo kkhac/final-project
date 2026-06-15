@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Mail, Lock, User as UserIcon, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/layout/AuthContext";
-import { authApi } from "@/lib/auth";
+import { authApi, formatApiError } from "@/lib/auth";
 import { AuthShell, Divider, Field, GoogleIcon } from "../login/page";
 
 export default function RegisterPage() {
@@ -30,7 +30,7 @@ export default function RegisterPage() {
       await register(email, password, name || undefined);
       router.replace("/");
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Could not create account.");
+      setError(formatApiError(err, "Could not create account."));
     } finally {
       setSubmitting(false);
     }
@@ -43,7 +43,7 @@ export default function RegisterPage() {
       const res = await authApi.googleAuthUrl();
       window.location.href = res.data.authorize_url;
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Google sign-in is not available.");
+      setError(formatApiError(err, "Google sign-in is not available."));
       setGoogleLoading(false);
     }
   }
