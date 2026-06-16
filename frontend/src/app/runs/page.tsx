@@ -2,7 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { evaluationsApi, EvaluationRun } from "@/lib/api";
+import {
+  evaluationsApi,
+  promptsApi,
+  testCasesApi,
+  EvaluationRun,
+} from "@/lib/api";
 
 const STATUS_STYLES: Record<string, string> = {
   pending: "bg-gray-100 text-gray-700",
@@ -30,6 +35,32 @@ export default function RunsPage() {
     queryKey: ["runs"],
     queryFn: () => evaluationsApi.list().then((r) => r.data),
   });
+
+  const { data: prompts = [] } = useQuery({
+    queryKey: ["prompts"],
+    queryFn: () => promptsApi.list().then((r) => r.data),
+  });
+
+  const { data: testCases = [] } = useQuery({
+    queryKey: ["test-cases"],
+    queryFn: () => testCasesApi.list().then((r) => r.data),
+  });
+
+  const versionLookup = new Map<
+    number,
+    { promptName: string; versionNumber: number }
+  >();
+  for (const p of prompts) {
+    for (const v of p.versions ?? []) {
+      versionLookup.set(v.id, {
+        promptName: p.name,
+        versionNumber: v.version_number,
+      });
+    }
+  }
+  const testCaseLookup = new Map<number, string>(
+    testCases.map((tc) => [tc.id, tc.name]),
+  );
 
   if (isLoading)
     return <div className="p-8 text-gray-500">Loading runs…</div>;
@@ -68,13 +99,27 @@ export default function RunsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {runs?.map((run) => (
+              {runs?.map((run) => {
+                const v = versionLookup.get(run.prompt_version_id);
+                const tcName = testCaseLookup.get(run.test_case_id);
+                return (
                 <tr key={run.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
                     <span className="font-mono text-gray-700">#{run.id}</span>
-                    <div className="text-xs text-gray-400 mt-0.5">
-                      version&nbsp;{run.prompt_version_id} · tc&nbsp;
-                      {run.test_case_id}
+                    <div className="text-xs text-gray-500 mt-0.5">
+                      {v ? (
+                        <>
+                          <span className="text-gray-700">{v.promptName}</span>
+                          <span className="ml-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono">
+                            v{v.versionNumber}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-gray-400">version #{run.prompt_version_id}</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">
+                      {tcName ?? `test case #${run.test_case_id}`}
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -105,7 +150,8 @@ export default function RunsPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
