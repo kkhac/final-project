@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { testCasesApi } from "@/lib/api";
 
@@ -27,9 +28,10 @@ export function ScenarioList() {
   return (
     <div className="space-y-3">
       {scenarios.map((s) => (
-        <div
+        <Link
           key={s.id}
-          className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all"
+          href={`/scenarios/${s.id}`}
+          className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-5 py-4 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all"
         >
           <div>
             <p className="font-medium text-gray-900">{s.name}</p>
@@ -41,13 +43,20 @@ export function ScenarioList() {
               {s.steps?.length ?? 0} step(s)
             </p>
           </div>
-          <button
-            onClick={() => del.mutate(s.id)}
-            className="text-xs text-red-400 hover:text-red-600"
-          >
-            Delete
-          </button>
-        </div>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (confirm(`Delete scenario "${s.name}"?`)) del.mutate(s.id);
+              }}
+              className="text-xs text-red-400 hover:text-red-600"
+            >
+              Delete
+            </button>
+            <span className="text-gray-300 group-hover:text-indigo-500">→</span>
+          </div>
+        </Link>
       ))}
     </div>
   );

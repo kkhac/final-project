@@ -2,11 +2,17 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { api } from "@/lib/api";
+import { api, promptsApi } from "@/lib/api";
 
 interface Prompt {
   id: number;
   name: string;
+}
+
+interface PromptVersion {
+  id: number;
+  version_number: number;
+  notes: string | null;
 }
 
 interface EvaluationRun {
@@ -61,17 +67,30 @@ function ScoreBar({ score }: { score: number | null }) {
 
 export default function ComparePage() {
   const [selectedPromptId, setSelectedPromptId] = useState<number | null>(null);
+  const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
 
   const { data: prompts } = useQuery<Prompt[]>({
     queryKey: ["prompts"],
     queryFn: () => api.get("/prompts/").then((r) => r.data),
   });
 
+  const { data: versions = [] } = useQuery<PromptVersion[]>({
+    queryKey: ["versions", selectedPromptId],
+    queryFn: () =>
+      promptsApi.listVersions(selectedPromptId!).then((r) => r.data),
+    enabled: selectedPromptId !== null,
+  });
+
   const { data: runs, isLoading } = useQuery<EvaluationRun[]>({
-    queryKey: ["runs", selectedPromptId],
+    queryKey: ["runs", selectedPromptId, selectedVersionId],
     queryFn: () =>
       api
-        .get("/evaluations/", { params: { prompt_id: selectedPromptId } })
+        .get("/evaluations/", {
+          params:
+            selectedVersionId !== null
+              ? { prompt_version_id: selectedVersionId }
+              : { prompt_id: selectedPromptId },
+        })
         .then((r) => r.data),
     enabled: selectedPromptId !== null,
   });
@@ -82,29 +101,54 @@ export default function ComparePage() {
     <div className="p-8 max-w-5xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold">Cross-model Comparison</h1>
       <p className="text-gray-500 text-sm">
-        Select a prompt to compare average scores across all models it has been
-        evaluated with.
+        Select a prompt to compare average scores across all models. Pick a
+        specific version to compare runs of that exact version only.
       </p>
 
-      {/* Prompt selector */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Prompt
-        </label>
-        <select
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          value={selectedPromptId ?? ""}
-          onChange={(e) =>
-            setSelectedPromptId(e.target.value ? Number(e.target.value) : null)
-          }
-        >
-          <option value="">— select a prompt —</option>
-          {prompts?.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+      {/* Prompt + Version selectors */}
+      <div className="flex flex-wrap gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Prompt
+          </label>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={selectedPromptId ?? ""}
+            onChange={(e) => {
+              setSelectedPromptId(e.target.value ? Number(e.target.value) : null);
+              setSelectedVersionId(null);
+            }}
+          >
+            <option value="">— select a prompt —</option>
+            {prompts?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Version
+          </label>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-400"
+            value={selectedVersionId ?? ""}
+            onChange={(e) =>
+              setSelectedVersionId(e.target.value ? Number(e.target.value) : null)
+            }
+            disabled={selectedPromptId === null}
+          >
+            <option value="">— all versions —</option>
+            {versions.map((v) => (
+              <option key={v.id} value={v.id}>
+                v{v.version_number}
+                {v.notes ? ` — ${v.notes}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {selectedPromptId && isLoading && (
@@ -113,7 +157,7 @@ export default function ComparePage() {
 
       {selectedPromptId && !isLoading && groups.length === 0 && (
         <p className="text-gray-500 text-sm">
-          No completed runs found for this prompt.
+          No completed runs found for this {selectedVersionId ? "version" : "prompt"}.
         </p>
       )}
 

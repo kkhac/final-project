@@ -3,7 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { api } from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
+import { api, promptsApi, testCasesApi } from "@/lib/api";
+import type { ConversationStep } from "@/lib/api";
 
 interface EvaluationResult {
   id: number;
@@ -70,6 +72,56 @@ function Check({ passed }: { passed: boolean | null }) {
   );
 }
 
+function RuleBadge({
+  label,
+  passed,
+  children,
+}: {
+  label: string;
+  passed: boolean | null;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-sm transition-colors ${
+          open ? "bg-gray-100" : "hover:bg-gray-50"
+        }`}
+      >
+        <Check passed={passed} />
+        <span className="text-gray-600">{label}</span>
+        <span className="text-gray-300 text-xs">▾</span>
+      </button>
+      {open && (
+        <div className="absolute z-20 left-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-left">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RunDetailPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -81,6 +133,26 @@ export default function RunDetailPage() {
       return s === "running" || s === "pending" ? 2000 : false;
     },
   });
+
+  const { data: testCase } = useQuery({
+    queryKey: ["test-case", run?.test_case_id],
+    queryFn: () => testCasesApi.get(run!.test_case_id).then((r) => r.data),
+    enabled: !!run?.test_case_id,
+  });
+
+  const { data: prompt } = useQuery({
+    queryKey: ["prompt", testCase?.prompt_id],
+    queryFn: () => promptsApi.get(testCase!.prompt_id).then((r) => r.data),
+    enabled: !!testCase?.prompt_id,
+  });
+
+  const stepLookup = new Map<number, ConversationStep>(
+    (testCase?.steps ?? []).map((s) => [s.step_number, s]),
+  );
+
+  const versionNumber = prompt?.versions.find(
+    (v) => v.id === run?.prompt_version_id,
+  )?.version_number;
 
   if (isLoading)
     return <div className="p-8 text-gray-500">Loading run…</div>;
@@ -109,11 +181,39 @@ export default function RunDetailPage() {
           <div>
             <h1 className="text-xl font-bold text-gray-900">Run #{run.id}</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {run.model_provider} /{" "}
               <span className="font-mono">{run.model_name}</span>
-              {" · "}Prompt version {run.prompt_version_id}
-              {" · "}Test case {run.test_case_id}
+              <span className="text-gray-400"> ({run.model_provider})</span>
             </p>
+            <div className="text-sm text-gray-600 mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+              {prompt ? (
+                <>
+                  <Link
+                    href={`/prompts/${prompt.id}`}
+                    className="text-indigo-600 hover:underline font-medium"
+                  >
+                    {prompt.name}
+                  </Link>
+                  {versionNumber !== undefined && (
+                    <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono text-xs">
+                      v{versionNumber}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-gray-400">Prompt version #{run.prompt_version_id}</span>
+              )}
+              <span className="text-gray-300">·</span>
+              {testCase ? (
+                <Link
+                  href={`/scenarios/${testCase.id}`}
+                  className="text-indigo-600 hover:underline"
+                >
+                  {testCase.name}
+                </Link>
+              ) : (
+                <span className="text-gray-400">Test case #{run.test_case_id}</span>
+              )}
+            </div>
           </div>
           <span
             className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize ${STATUS_STYLES[run.status]}`}
@@ -184,15 +284,84 @@ export default function RunDetailPage() {
                 )}
 
                 {/* Check row */}
-                <div className="flex flex-wrap items-center gap-6 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <Check passed={result.keyword_check_passed} />
-                    <span className="text-gray-500">Keywords</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Check passed={result.format_check_passed} />
-                    <span className="text-gray-500">Format</span>
-                  </div>
+                <div className="flex flex-wrap items-center gap-4 text-sm">
+                  <RuleBadge label="Keywords" passed={result.keyword_check_passed}>
+                    {(() => {
+                      const kws =
+                        stepLookup.get(result.step_number)?.expected_keywords ?? [];
+                      if (kws.length === 0)
+                        return (
+                          <p className="text-xs text-gray-500">
+                            No keywords were expected for this step.
+                          </p>
+                        );
+                      const details = (result.rule_details ?? {}) as {
+                        matched_keywords?: string[];
+                        missing_keywords?: string[];
+                      };
+                      const matchedSet = new Set(
+                        (details.matched_keywords ?? []).map((k) => k.toLowerCase()),
+                      );
+                      const haveDetails =
+                        Array.isArray(details.matched_keywords) ||
+                        Array.isArray(details.missing_keywords);
+                      const response = (result.llm_response ?? "").toLowerCase();
+                      const isMatched = (kw: string) =>
+                        haveDetails
+                          ? matchedSet.has(kw.toLowerCase())
+                          : response.includes(kw.toLowerCase());
+                      return (
+                        <>
+                          <p className="text-xs text-gray-500 mb-2">
+                            Expected keywords (
+                            <span className="text-green-700">green = found</span>,{" "}
+                            <span className="text-red-600">red = missing</span>):
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {kws.map((kw) => {
+                              const ok = isMatched(kw);
+                              return (
+                                <span
+                                  key={kw}
+                                  className={`px-2 py-0.5 rounded text-xs font-mono border ${
+                                    ok
+                                      ? "bg-green-50 border-green-200 text-green-800"
+                                      : "bg-red-50 border-red-200 text-red-700"
+                                  }`}
+                                >
+                                  {kw}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </RuleBadge>
+
+                  <RuleBadge label="Format" passed={result.format_check_passed}>
+                    {(() => {
+                      const regex =
+                        stepLookup.get(result.step_number)?.expected_format_regex;
+                      if (!regex)
+                        return (
+                          <p className="text-xs text-gray-500">
+                            No format regex was expected for this step.
+                          </p>
+                        );
+                      return (
+                        <>
+                          <p className="text-xs text-gray-500 mb-2">
+                            Expected format regex:
+                          </p>
+                          <code className="block text-xs bg-gray-900 text-gray-100 rounded px-2 py-1.5 font-mono break-all whitespace-pre-wrap">
+                            {regex}
+                          </code>
+                        </>
+                      );
+                    })()}
+                  </RuleBadge>
+
                   {result.judge_score !== null && (
                     <div className="flex items-center gap-2">
                       <span className="text-gray-500">Judge:</span>

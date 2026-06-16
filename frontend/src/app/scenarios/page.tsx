@@ -8,12 +8,12 @@ export default function ScenariosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Test Scenarios</h1>
+      <div className="flex items-center justify-between pt-4 mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 pl-2">Test Scenarios</h1>
         {!building && (
           <button
             onClick={() => setBuilding(true)}
-            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+            className="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors mr-2"
           >
             + New Scenario
           </button>
