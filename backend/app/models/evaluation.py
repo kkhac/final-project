@@ -1,6 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum, Float, JSON, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy import UniqueConstraint
 import enum
 
 from app.database import Base
@@ -23,6 +24,7 @@ class EvaluationRun(Base):
     model_provider = Column(String(50), nullable=False)   # "openai", "anthropic", "ollama"
     model_name = Column(String(100), nullable=False)       # "gpt-4o", "claude-3-5-sonnet", etc.
     status = Column(Enum(RunStatus), default=RunStatus.PENDING)
+    error_message = Column(Text, nullable=True)
     started_at = Column(DateTime, nullable=True)
     finished_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -33,6 +35,8 @@ class EvaluationRun(Base):
 
     @property
     def overall_score(self):
+        if self.status == RunStatus.FAILED:
+            return None
         if not self.results:
             return None
         scores = [r.score for r in self.results if r.score is not None]
@@ -42,6 +46,9 @@ class EvaluationRun(Base):
 class EvaluationResult(Base):
     """Result for one step/turn of a test case."""
     __tablename__ = "evaluation_results"
+    __table_args__ = (
+        UniqueConstraint("run_id", "step_number", name="uq_run_step"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     run_id = Column(Integer, ForeignKey("evaluation_runs.id"), nullable=False)

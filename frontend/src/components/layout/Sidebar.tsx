@@ -1,44 +1,88 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, FlaskConical, BarChart3 } from "lucide-react";
-import { clsx } from "clsx";
+import { LayoutDashboard, FileText, FlaskConical, BarChart3, Zap, List, GitCompare, LogOut } from "lucide-react";
+import { useAuth } from "./AuthContext";
 
 const nav = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/prompts", label: "Prompts", icon: FileText },
-  { href: "/scenarios", label: "Scenarios", icon: FlaskConical },
-  { href: "/evaluations", label: "Evaluations", icon: BarChart3 },
+  { href: "/",            icon: LayoutDashboard, label: "Dashboard"   },
+  { href: "/prompts",     icon: FileText,        label: "Prompts"     },
+  { href: "/scenarios",   icon: FlaskConical,    label: "Scenarios"   },
+  { href: "/evaluations", icon: BarChart3,       label: "Evaluations" },
+  { href: "/runs",        icon: List,            label: "Runs"        },
+  { href: "/compare",    icon: GitCompare,      label: "Compare"     },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const initial = (user?.name || user?.email || "?").trim().charAt(0).toUpperCase();
+  const displayName = user?.name || user?.email || "";
 
   return (
-    <aside className="w-56 bg-white border-r border-gray-200 flex flex-col shrink-0">
-      <div className="px-5 py-4 border-b border-gray-100">
-        <span className="text-sm font-bold text-brand-600 tracking-tight">
-          LLM Prompt Testing
-        </span>
+    <aside className="fixed left-0 top-0 h-screen w-60 bg-slate-900 flex flex-col z-10">
+      {/* Brand */}
+      <div className="px-5 py-5 border-b border-slate-700">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center flex-shrink-0">
+            <Zap size={15} className="text-white" />
+          </div>
+          <div className="leading-tight">
+            <p className="text-white font-semibold text-sm">PromptTest</p>
+            <p className="text-slate-400 text-xs">Regression Platform</p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
-        {nav.map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={clsx(
-              "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-              pathname.startsWith(href)
-                ? "bg-brand-50 text-brand-700"
-                : "text-gray-600 hover:bg-gray-100"
-            )}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </Link>
-        ))}
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
+        {nav.map(({ href, icon: Icon, label }) => {
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                active
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-slate-800"
+              }`}
+            >
+              <Icon size={17} />
+              {label}
+            </Link>
+          );
+        })}
       </nav>
+
+      {/* User panel */}
+      {user && (
+        <div className="px-3 py-3 border-t border-slate-700">
+          <div className="flex items-center gap-3 px-2 py-2">
+            {user.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatar_url} alt="" className="w-8 h-8 rounded-full" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center flex-shrink-0">
+                {initial}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-medium text-white truncate">{displayName}</p>
+              <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-1 w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition"
+          >
+            <LogOut size={14} />
+            Sign out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

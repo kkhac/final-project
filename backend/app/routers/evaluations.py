@@ -1,10 +1,17 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from typing import List, Optional
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.evaluation import EvaluationRun
-from app.schemas.evaluation import EvaluationRunCreate, EvaluationRunRead
+from app.models.evaluation import RunStatus
+from app.schemas.evaluation import EvaluationRunCreate, EvaluationRunRead, EvaluationResultRead
+from app.services.evaluation_crud_service import (
+    create_evaluation_run,
+    get_run_or_404,
+    list_runs,
+    list_results,
+    get_prompt_run_history,
+)
 from app.services.evaluation_service import run_evaluation
 
 router = APIRouter(prefix="/evaluations", tags=["evaluations"])
@@ -16,33 +23,56 @@ def trigger_evaluation(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    run = EvaluationRun(
+    run = create_evaluation_run(
+        db=db,
         prompt_version_id=payload.prompt_version_id,
         test_case_id=payload.test_case_id,
         model_provider=payload.model_provider,
         model_name=payload.model_name,
     )
-    db.add(run)
-    db.commit()
-    db.refresh(run)
-
-    # Execute asynchronously so the API returns immediately
     background_tasks.add_task(run_evaluation, run.id)
-
     return run
 
 
+@router.post("/{run_id}/retry", response_model=EvaluationRunRead, status_code=201)
+def retry_evaluation(
+    run_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """Clone a previous run with the same prompt/test case/model and schedule it."""
+    previous = get_run_or_404(db, run_id)
+    new_run = create_evaluation_run(
+        db=db,
+        prompt_version_id=previous.prompt_version_id,
+        test_case_id=previous.test_case_id,
+        model_provider=previous.model_provider,
+        model_name=previous.model_name,
+    )
+    background_tasks.add_task(run_evaluation, new_run.id)
+    return new_run
+
+
 @router.get("/", response_model=List[EvaluationRunRead])
-def list_runs(prompt_version_id: int | None = None, db: Session = Depends(get_db)):
-    query = db.query(EvaluationRun)
-    if prompt_version_id:
-        query = query.filter(EvaluationRun.prompt_version_id == prompt_version_id)
-    return query.order_by(EvaluationRun.created_at.desc()).all()
+def list_evaluation_runs(
+    prompt_version_id: Optional[int] = None,
+    prompt_id: Optional[int] = None,
+    status: Optional[RunStatus] = None,
+    db: Session = Depends(get_db),
+):
+    return list_runs(db, prompt_version_id=prompt_version_id, prompt_id=prompt_id, status=status)
 
 
 @router.get("/{run_id}", response_model=EvaluationRunRead)
 def get_run(run_id: int, db: Session = Depends(get_db)):
-    run = db.query(EvaluationRun).filter(EvaluationRun.id == run_id).first()
-    if not run:
-        raise HTTPException(status_code=404, detail="Evaluation run not found")
-    return run
+    return get_run_or_404(db, run_id)
+
+
+@router.get("/{run_id}/results", response_model=List[EvaluationResultRead])
+def get_run_results(run_id: int, db: Session = Depends(get_db)):
+    return list_results(db, run_id)
+
+
+@router.get("/history/{prompt_id}", response_model=List[EvaluationRunRead])
+def get_run_history(prompt_id: int, db: Session = Depends(get_db)):
+    return get_prompt_run_history(db, prompt_id)
